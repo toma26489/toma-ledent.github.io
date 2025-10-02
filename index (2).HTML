@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prévisions Météo 5 Jours</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .search-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        #city-input {
+            padding: 12px 20px;
+            width: 300px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        
+        #search-btn, #geolocate-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 12px 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #search-btn:hover, #geolocate-btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+        
+        .current-weather {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        
+        .location {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .location i {
+            color: #ffd166;
+            font-size: 1.5rem;
+        }
+        
+        .temp {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #ffd166;
+        }
+        
+        .description {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            text-transform: capitalize;
+        }
+        
+        .details {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .detail-item i {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: #4cc9f0;
+        }
+        
+        .detail-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .detail-label {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        
+        .forecast-container {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #ffd166;
+        }
+        
+        .forecast {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        
+        .forecast-day {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+        
+        .forecast-day:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .day-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .forecast-icon {
+            font-size: 2.5rem;
+            margin: 10px 0;
+            color: #ffd166;
+        }
+        
+        .forecast-temp {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+        
+        .temp-max {
+            font-weight: bold;
+            color: #ffd166;
+        }
+        
+        .temp-min {
+            color: #a0d2eb;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            height: 400px;
+        }
+        
+        #temp-chart {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .map-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            height: 700px;
+            overflow: hidden;
+        }
+        
+        #windy-map {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2rem;
+        }
+        
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            #city-input {
+                width: 200px;
+            }
+            
+            .temp {
+                font-size: 2.5rem;
+            }
+            
+            .forecast {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .chart-container {
+                height: 350px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .forecast {
+                grid-template-columns: 1fr;
+            }
+            
+            .details {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-cloud-sun"></i> Prévisions Météo 5 Jours</h1>
+            <p>Données météo précises avec géolocalisation en option</p>
+        </header>
+        
+        <div class="search-container">
+            <input type="text" id="city-input" placeholder="Rechercher une ville...">
+            <button id="search-btn"><i class="fas fa-search"></i> Rechercher</button>
+            <button id="geolocate-btn"><i class="fas fa-location-crosshairs"></i> Géolocaliser</button>
+        </div>
+        
+        <div id="location-error" class="error" style="display: none;">
+            <i class="fas fa-exclamation-circle"></i> Impossible d'obtenir votre position. Veuillez entrer une ville manuellement.
+        </div>
+        
+        <div class="current-weather">
+            <div class="location">
+                <i class="fas fa-location-dot"></i>
+                <h2 id="city-name">Paris</h2>
+            </div>
+            <div class="temp" id="current-temp">22°C</div>
+            <div class="description" id="weather-desc">Ciel dégagé</div>
+            <div class="details">
+                <div class="detail-item">
+                    <i class="fas fa-wind"></i>
+                    <div class="detail-value" id="wind-speed">5 km/h</div>
+                    <div class="detail-label">Vent</div>
+                </div>
+                <div class="detail-item">
+                    <i class="fas fa-sun"></i>
+                    <div class="detail-value" id="humidity">65%</div>
+                    <div class="detail-label">Humidité</div>
+                </div>
+                <div class="detail-item">
+                    <i class="fas fa-compress"></i>
+                    <div class="detail-value" id="pressure">1015 hPa</div>
+                    <div class="detail-label">Pression</div>
+                </div>
+                <div class="detail-item">
+                    <i class="fas fa-eye"></i>
+                    <div class="detail-value" id="visibility">10 km</div>
+                    <div class="detail-label">Visibilité</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="forecast-container">
+            <h2 class="section-title"><i class="fas fa-calendar-alt"></i> Prévisions 5 Jours</h2>
+            <div class="forecast" id="forecast-data">
+                <!-- Forecast items will be inserted here -->
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <h2 class="section-title"><i class="fas fa-chart-line"></i> Températures Min/Max</h2>
+            <canvas id="temp-chart"></canvas>
+        </div>
+        
+        <div class="map-container">
+            <h2 class="section-title"><i class="fas fa-map"></i> Carte Météo Interactive</h2>
+            <iframe id="windy-map" src="https://embed.windy.com/embed2.html?lat=48.85&lon=2.35&detailLat=48.85&detailLon=2.35&width=650&height=650&zoom=5&level=surface&overlay=temp&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1" frameborder="0"></iframe>
+        </div>
+        
+        <div class="footer">
+            réalisé par toma LEDENT
+        </div>
+    </div>
+
+    <script>
+        // API OpenWeather
+        const API_KEY = 'e29a2cee4208640874c4b0e82ec71877';
+        const GEO_API_URL = 'https://api.openweathermap.org/geo/1.0/direct';
+        const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/forecast';
+        
+        // Éléments DOM
+        const cityInput = document.getElementById('city-input');
+        const searchBtn = document.getElementById('search-btn');
+        const geolocateBtn = document.getElementById('geolocate-btn');
+        const cityName = document.getElementById('city-name');
+        const currentTemp = document.getElementById('current-temp');
+        const weatherDesc = document.getElementById('weather-desc');
+        const windSpeed = document.getElementById('wind-speed');
+        const humidity = document.getElementById('humidity');
+        const pressure = document.getElementById('pressure');
+        const visibility = document.getElementById('visibility');
+        const forecastData = document.getElementById('forecast-data');
+        const windyMap = document.getElementById('windy-map');
+        const locationError = document.getElementById('location-error');
+        
+        // Graphique température
+        let tempChart;
+        
+        // Obtenir la position de l'utilisateur
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        getWeatherByCoords(lat, lon);
+                    },
+                    error => {
+                        console.log("Erreur de géolocalisation:", error);
+                        let message;
+                        switch(error.code) {
+                            case 1:
+                                message = "Vous avez refusé l'accès à la localisation. Veuillez autoriser pour utiliser cette fonctionnalité.";
+                                break;
+                            case 2:
+                                message = "Position indisponible. Vérifiez votre connexion ou votre appareil.";
+                                break;
+                            case 3:
+                                message = "Délai d'attente expiré pour obtenir la position.";
+                                break;
+                            default:
+                                message = "Erreur inconnue lors de la géolocalisation.";
+                        }
+                        locationError.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message} Veuillez entrer une ville manuellement.`;
+                        locationError.style.display = 'block';
+                    }
+                );
+            } else {
+                locationError.innerHTML = '<i class="fas fa-exclamation-circle"></i> Votre navigateur ne supporte pas la géolocalisation.';
+                locationError.style.display = 'block';
+            }
+        }
+        
+        // Obtenir les coordonnées d'une ville
+        async function getCoordinates(city) {
+            try {
+                const response = await fetch(`${GEO_API_URL}?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`);
+                const data = await response.json();
+                if (data.length === 0) {
+                    throw new Error('Ville non trouvée');
+                }
+                return { lat: data[0].lat, lon: data[0].lon };
+            } catch (error) {
+                console.error('Erreur lors de l\'obtention des coordonnées:', error);
+                throw error;
+            }
+        }
+        
+        // Obtenir la météo par coordonnées
+        async function getWeatherByCoords(lat, lon) {
+            try {
+                const response = await fetch(`${WEATHER_API_URL}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=fr`);
+                const data = await response.json();
+                if (data.cod !== '200') {
+                    throw new Error(data.message || 'Erreur lors de la récupération des données');
+                }
+                displayWeather(data);
+            } catch (error) {
+                console.error('Erreur lors de la récupération des données météo:', error);
+                locationError.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${error.message || 'Erreur lors de la récupération des données'}`;
+                locationError.style.display = 'block';
+            }
+        }
+        
+        // Obtenir la météo par nom de ville
+        async function getWeatherByCity(city) {
+            try {
+                const coords = await getCoordinates(city);
+                getWeatherByCoords(coords.lat, coords.lon);
+            } catch (error) {
+                console.error('Erreur lors de la récupération des données météo:', error);
+                locationError.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${error.message || 'Ville non trouvée'}`;
+                locationError.style.display = 'block';
+            }
+        }
+        
+        // Afficher les données météo
+        function displayWeather(data) {
+            locationError.style.display = 'none';
+            
+            // Données actuelles
+            const current = data.list[0];
+            cityName.textContent = `${data.city.name}, ${data.city.country}`;
+            currentTemp.textContent = `${Math.round(current.main.temp)}°C`;
+            weatherDesc.textContent = current.weather[0].description;
+            windSpeed.textContent = `${Math.round(current.wind.speed * 3.6)} km/h`; // Convertir m/s en km/h
+            humidity.textContent = `${current.main.humidity}%`;
+            pressure.textContent = `${current.main.pressure} hPa`;
+            visibility.textContent = `${(current.visibility / 1000).toFixed(1)} km`; // Convertir en km
+            
+            // Mise à jour de la carte Windy
+            const lat = data.city.coord.lat;
+            const lon = data.city.coord.lon;
+            windyMap.src = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&width=650&height=650&zoom=5&level=surface&overlay=temp&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1`;
+            
+            // Prévisions 5 jours
+            displayForecast(data.list);
+            
+            // Graphique
+            createTempChart(data.list);
+        }
+        
+        // Afficher les prévisions
+        function displayForecast(forecastList) {
+            forecastData.innerHTML = '';
+            
+            // Regrouper les prévisions par jour
+            const dailyForecasts = {};
+            forecastList.forEach(item => {
+                const date = new Date(item.dt * 1000);
+                const day = date.toLocaleDateString('fr-FR', { weekday: 'short' });
+                const dayKey = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+                
+                if (!dailyForecasts[dayKey]) {
+                    dailyForecasts[dayKey] = {
+                        day: day,
+                        date: dayKey,
+                        temps: [],
+                        icons: []
+                    };
+                }
+                
+                dailyForecasts[dayKey].temps.push(item.main.temp);
+                dailyForecasts[dayKey].icons.push(item.weather[0].icon);
+            });
+            
+            // Prendre les 5 prochains jours
+            const forecastDays = Object.values(dailyForecasts).slice(0, 5);
+            
+            forecastDays.forEach(day => {
+                const maxTemp = Math.max(...day.temps);
+                const minTemp = Math.min(...day.temps);
+                
+                const forecastEl = document.createElement('div');
+                forecastEl.className = 'forecast-day';
+                forecastEl.innerHTML = `
+                    <div class="day-name">${day.day}</div>
+                    <div class="date">${day.date}</div>
+                    <div class="forecast-icon">
+                        <img src="https://openweathermap.org/img/wn/${day.icons[0]}@2x.png" alt="Météo">
+                    </div>
+                    <div class="forecast-temp">
+                        <span class="temp-max">${Math.round(maxTemp)}°</span>
+                        <span class="temp-min">${Math.round(minTemp)}°</span>
+                    </div>
+                `;
+                
+                forecastData.appendChild(forecastEl);
+            });
+        }
+        
+        // Créer le graphique des températures
+        function createTempChart(forecastList) {
+            // Regrouper les prévisions par jour
+            const dailyForecasts = {};
+            forecastList.forEach(item => {
+                const date = new Date(item.dt * 1000);
+                const dayKey = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+                
+                if (!dailyForecasts[dayKey]) {
+                    dailyForecasts[dayKey] = {
+                        temps: []
+                    };
+                }
+                
+                dailyForecasts[dayKey].temps.push(item.main.temp);
+            });
+            
+            // Extraire les températures min et max par jour
+            const labels = [];
+            const minTemps = [];
+            const maxTemps = [];
+            
+            Object.entries(dailyForecasts).slice(0, 5).forEach(([date, data]) => {
+                const minTemp = Math.min(...data.temps);
+                const maxTemp = Math.max(...data.temps);
+                
+                labels.push(date);
+                minTemps.push(minTemp);
+                maxTemps.push(maxTemp);
+            });
+            
+            // Mettre à jour le graphique
+            const ctx = document.getElementById('temp-chart').getContext('2d');
+            
+            // Détruire l'ancien graphique s'il existe
+            if (tempChart) {
+                tempChart.destroy();
+            }
+            
+            tempChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Température Min (°C)',
+                            data: minTemps,
+                            borderColor: '#a0d2eb',
+                            backgroundColor: 'rgba(160, 210, 235, 0.2)',
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            order: 2
+                        },
+                        {
+                            label: 'Température Max (°C)',
+                            data: maxTemps,
+                            borderColor: '#ffd166',
+                            backgroundColor: 'rgba(255, 209, 102, 0.2)',
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#fff',
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Températures Min et Max sur 5 jours',
+                            color: '#fff',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#fff'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#fff'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialiser l'application
+        document.addEventListener('DOMContentLoaded', () => {
+            // Charger les données pour Paris par défaut
+            getWeatherByCity('Paris');
+            
+            // Gestion de la recherche
+            searchBtn.addEventListener('click', () => {
+                const city = cityInput.value.trim();
+                if (city) {
+                    getWeatherByCity(city);
+                } else {
+                    alert('Veuillez entrer une ville');
+                }
+            });
+            
+            // Gestion de la géolocalisation
+            geolocateBtn.addEventListener('click', getLocation);
+            
+            // Recherche avec la touche Entrée
+            cityInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const city = cityInput.value.trim();
+                    if (city) {
+                        getWeatherByCity(city);
+                    } else {
+                        alert('Veuillez entrer une ville');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
